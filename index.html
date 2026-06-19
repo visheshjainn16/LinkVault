@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<!-- This line tells the browser "this is a modern HTML file". Always the first line. -->
+
+<html lang="en">
+<!-- <html> wraps the ENTIRE page. lang="en" just tells the browser the page is in English. -->
+
+<head>
+  <!-- The <head> holds information ABOUT the page. Nothing inside <head> shows up on screen directly. -->
+
+  <meta charset="UTF-8">
+  <!-- This tells the browser which characters/symbols it's allowed to display (so emojis, special letters etc. work). -->
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- This makes the page resize properly on phones instead of looking zoomed out. -->
+
+  <title>LinkVault</title>
+  <!-- This text shows up in the browser TAB at the top. -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <link rel="stylesheet" href="style.css">
+  <!-- This connects our CSS file (the "style" file) to this HTML file. Without this line, the page would have zero design. -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- This loads a font called "Inter" from Google Fonts - a free service.
+       Inter is the same font family used by Stripe, Linear, and Notion,
+       which is why it reads as "professional software" rather than a
+       default browser font.
+       The two <link rel="preconnect"> lines above aren't the font itself --
+       they just tell the browser "get ready to connect to Google's font
+       servers", which makes the actual font load a little faster.
+       The third line is the one that really matters: it loads FOUR
+       weights of Inter (400=normal, 500=medium, 600=semibold, 700=bold)
+       so we have flexibility for headings vs body text vs buttons. -->
+</head>
+
+<body>
+  <!-- Everything inside <body> is what actually shows up on the screen. -->
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <!-- <header> is just a section name for "the top part of the page". class="topbar" lets us style it from CSS later. -->
+
+    <div class="topbar-left">
+      <!-- This new div groups the dark mode button and the logo together,
+           so they sit on the LEFT side as one unit, with the link count
+           pushed to the right by justify-content: space-between in CSS. -->
+
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark mode">
+        <svg id="moonIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg id="sunIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+      </button>
+      <!-- We switched AGAIN, this time from an icon FONT to raw inline SVG
+           shapes drawn directly with <path>, <circle>, and <line> tags.
+           This is the most reliable option because the icon is written
+           directly into the HTML itself -- there is nothing to download
+           from the internet, so it can never fail to load, even when
+           opening the file directly from your Desktop with no server
+           and no internet connection at all.
+           We draw BOTH a moon icon and a sun icon ahead of time, but the
+           sun one starts hidden (style="display:none"). JavaScript will
+           just show one and hide the other when you click, instead of
+           changing icon classes. -->
+
+      <h1 class="logo">LinkVault</h1>
+    </div>
+
+    <p class="link-count" id="linkCount">0 links saved</p>
+    <!-- id="linkCount" is like a unique name tag. We use it in JavaScript to find THIS exact element and change its text. -->
+  </header>
+
+  <!-- ============ ADD LINK FORM ============ -->
+  <div class="top-layout">
+  <section class="add-section">
+    <!-- <section> just groups related content together, like a folder for HTML. -->
+
+    <input
+      type="text"
+      id="urlInput"
+      placeholder="Paste a link here (e.g. https://youtube.com/...)"
+      class="url-input"
+    >
+    <!-- <input> is a text box the user can type into.
+         type="text" means it accepts normal text.
+         id="urlInput" is the unique name we'll use in JS to read what the user typed.
+         placeholder is the grey hint text shown when the box is empty. -->
+
+    <input
+      type="text"
+      id="tagInput"
+      placeholder="Tags (comma separated, e.g. python, tutorial)"
+      class="tag-input"
+    >
+    <!-- A second text box for tags. Same idea, different id. -->
+
+    <button id="addBtn" class="add-btn">+ Save Link</button>
+    <!-- <button> is a clickable button. We'll tell JavaScript "when this is clicked, run the save function". -->
+  </section>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="dashboard-section">
+
+  <div class="stat-card links-card">
+    <h2 id="totalLinks">0</h2>
+    <p>Total Links</p>
+  </div>
+
+  <div class="stat-card favorites-card">
+    <h2 id="favoriteLinks">0</h2>
+    <p>Favorites</p>
+  </div>
+
+  <div class="stat-card tags-card">
+    <h2 id="totalTags">0</h2>
+    <p>Unique Tags</p>
+  </div>
+  <div class="backup-actions">
+  <button id="exportBtn" class="backup-btn">
+    Export
+  </button>
+
+  <button id="importBtn" class="backup-btn">
+    Import
+  </button>
+
+  <input
+    type="file"
+    id="importFile"
+    accept=".json"
+    style="display:none;"
+  >
+</div>
+
+</section>
+</div>
+<!-- ============ SEARCH + FILTER ============ -->
+<section class="search-section">
+    <div class="search-sort-row">
+      <!-- This new div places the search box and the sort dropdown in the
+           SAME horizontal row, side by side, instead of stacked. -->
+
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search your links..."
+        class="search-input"
+      >
+      <!-- This box is for searching. Every time the user types a letter, JS will filter the list live. -->
+
+      <select id="sortSelect" class="sort-select">
+        <!-- <select> creates a dropdown menu. Each <option> inside it is one
+             choice the user can pick. The "value" attribute is what
+             JavaScript actually reads -- the text between the tags is just
+             what the user SEES, the value is what the CODE uses. -->
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="az">Title A–Z</option>
+      </select>
+    </div>
+
+    <div class="tag-filters" id="tagFilters">
+      <!-- <div> just means "a box/container". This empty box will be FILLED with tag buttons by JavaScript,
+           because the tags depend on what links the user has saved -- we don't know them ahead of time. -->
+    </div>
+  </section>
+
+  <!-- ============ THE LIST OF SAVED LINKS ============ -->
+  <section class="links-section">
+    <div id="linksContainer" class="links-container">
+      <!-- This is the most important box on the page. It starts EMPTY.
+           JavaScript will look at all saved links and build little "cards" for each one,
+           then place them inside this container. -->
+    </div>
+
+    <p id="emptyMessage" class="empty-message">
+      No links saved yet. Paste a link above to get started.
+    </p>
+    <!-- This message only shows when there are zero links. JS will hide/show it automatically. -->
+  </section>
+
+  <div id="toast" class="toast">
+       Notification
+  </div>
+  <!-- THIS WAS THE BUG: this toast div used to sit AFTER the <script> tag
+       below. The browser reads HTML top to bottom, and the very moment it
+       hits a <script> tag, it stops and runs that file immediately --
+       it does NOT wait for the rest of the page first. So script.js was
+       running document.getElementById('toast') before this div existed
+       on the page at all, getting back "null" and getting stuck with
+       that null forever. Moving this div ABOVE the script tag means it
+       exists in the page the moment script.js asks for it. -->
+
+  <!-- ============ JAVASCRIPT FILE ============ -->
+  <script src="script.js"></script>
+  <!-- This loads our JavaScript file. It's placed at the END of <body> on purpose --
+       this way, the browser builds all the HTML first, THEN runs the JS that controls it.
+       If we put this at the top, the JS might try to find elements that don't exist yet and break. -->
+</body>
+</html>

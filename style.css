@@ -1,0 +1,700 @@
+/* ============================================
+   LinkVault styles
+   Every CSS rule follows this pattern:
+   selector { property: value; }
+   "selector" = WHICH element to style (by tag, class, or id)
+   "property: value" = WHAT to change about it
+   ============================================ */
+
+/* ---------- COLOR SYSTEM ----------
+   These are CSS Custom Properties (variables). Think of them as named paint
+   buckets. Instead of typing a hex code 20 times, we type var(--name) and
+   change the color in exactly ONE place if we ever want to redesign.
+
+   We now have TWO sets: one for light mode (default, under :root),
+   and one for dark mode (under [data-theme="dark"]). JavaScript will
+   add/remove that data-theme attribute on the page when you click the
+   dark mode button -- the moment it changes, EVERY element using these
+   variables updates instantly, with zero extra code needed. */
+
+:root {
+  /* ---- LIGHT MODE (default) ----
+     Palette: deep navy ink + slate surfaces + a single confident indigo
+     accent. This combination reads as "professional software", the same
+     family of colors used by tools like Linear and Notion, not a
+     student-project teal/orange combo. */
+  --bg: #F4F5F7;             /* cool light grey page background */
+  --surface: #FFFFFF;         /* white cards sitting on top of the background */
+  --surface-raised: #FFFFFF;  /* same as surface for now, kept separate so dark mode can differ */
+  --ink: #1B1F27;             /* near-black navy text, softer than pure black */
+  --ink-muted: #6B7280;       /* grey for secondary/less important text */
+  --line: #E3E5E9;            /* subtle border color between sections */
+  --accent: #4F46E5;          /* confident indigo - the ONE color used for emphasis */
+  --accent-hover: #4338CA;    /* slightly darker indigo for hover states */
+  --accent-soft: #EEF0FD;     /* pale indigo background, used behind tags */
+  --accent-soft-text: #4338CA;/* readable indigo text color when sitting on accent-soft */
+  --danger: #DC2626;          /* red, used ONLY for delete/destructive actions */
+  --success: #16A34A;         /* green, used for "copied!" confirmation */
+  --radius: 10px;             /* corner roundness, reused everywhere for consistency */
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.04);
+  /* a very soft, realistic shadow - barely visible, just enough to lift cards slightly */
+}
+
+[data-theme="dark"] {
+  /* ---- DARK MODE ----
+     JS adds data-theme="dark" to the <html> tag when the user toggles it.
+     Every var(--xxx) used anywhere in this file automatically switches
+     to these values instead - we don't have to rewrite a single rule
+     below this point. That's the whole point of CSS variables. */
+  --bg: #14161B;
+  --surface: #1D2027;
+  --surface-raised: #242832;
+  --ink: #E7E8EA;
+  --ink-muted: #9499A3;
+  --line: #30343D;
+  --accent: #818CF8;
+  --accent-hover: #9AA3FA;
+  --accent-soft: #2A2D6B;
+  --accent-soft-text: #C7D0FE;
+  --danger: #F87171;
+  --success: #4ADE80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* The * selector means "apply this to EVERY element on the page".
+   box-sizing: border-box makes width/height calculations predictable --
+   without this, padding and borders mess up sizing in confusing ways. */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* This was the bug: html had a transition but no actual background
+     color set, so it stayed the browser's default white. On a short
+     page like this one, that white html background was visible peeking
+     out, which is why dark mode looked "half on, half off". Now html
+     gets the same var(--bg) as body, so there's no gap in coverage. */
+  background: var(--bg);
+  min-height: 100%;
+  transition: background-color 0.2s ease;
+}
+
+body {
+  font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* "Inter" is now FIRST in this list, so the browser uses it if it
+     loaded successfully. Everything after it (-apple-system, Segoe UI,
+     Roboto, sans-serif) are FALLBACKS -- if Inter somehow fails to load
+     (e.g. no internet connection), the browser quietly falls back to
+     the next font in line instead of showing nothing. This is the same
+     "font stack" pattern from before, just with Inter added at the front. */
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  padding: 24px 16px 60px;
+  max-width: 680px;
+  margin: 0 auto;
+  min-height: 100vh;
+  /* min-height: 100vh forces the body to be AT LEAST the full height of
+     the browser window, even if the content inside is short. Without
+     this, a page with very little content (like yours with 0 links)
+     leaves body shorter than the screen, exposing whatever is behind it. */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ============ TOP BAR ============ */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  gap: 12px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-toggle {
+  /* The dark mode button. Square, icon-only, sits to the LEFT of the logo
+     since that's where you asked for it. */
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  /* font-size here controls the size of the <i> icon inside, since
+     Tabler icons are just font characters and inherit font-size
+     from their parent button */
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.link-count {
+  font-size: 13px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+/* ============ ADD LINK SECTION ============ */
+.add-section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  /* the soft shadow is what makes this card feel "lifted" rather than flat
+     and pasted onto the page -- a small detail that reads as more polished */
+}
+
+.url-input,
+.tag-input,
+.search-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  transition: border-color 0.15s ease;
+}
+
+.url-input::placeholder,
+.tag-input::placeholder,
+.search-input::placeholder {
+  color: var(--ink-muted);
+}
+
+.url-input:focus,
+.tag-input:focus,
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  /* this faint ring around the focused box is a standard "professional app"
+     touch -- it's what Stripe, Linear, and Notion all do on focus */
+}
+
+.add-btn {
+  padding: 11px 16px;
+  background: var(--accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.add-btn:hover {
+  background: var(--accent-hover);
+}
+
+/* ============ SEARCH + SORT ROW ============ */
+.search-section {
+  margin-bottom: 20px;
+}
+
+.search-sort-row {
+  /* a new flex row that holds the search box AND the sort dropdown
+     side by side, since you asked for sorting controls */
+  display: flex;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  /* flex: 1 means "take up all remaining space" so the search box stretches
+     while the sort dropdown next to it stays its natural width */
+}
+
+.sort-select {
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  /* prevents the dropdown from getting squeezed if the search box grows */
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.tag-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.tag-pill {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tag-pill.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+/* ============ LINK CARDS ============ */
+.links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.link-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  position: relative;
+  box-shadow: var(--shadow);
+
+  /* ---- ANIMATION ----
+     This is the entrance animation you asked for. "animation: NAME DURATION
+     EASING" tells the browser to run the @keyframes block called
+     "cardEnter" (defined further down) over 0.25 seconds whenever a NEW
+     card is added to the page. */
+  animation: cardEnter 0.25s ease;
+}
+
+@keyframes cardEnter {
+  /* @keyframes defines a sequence: "from" is how the element looks the
+     INSTANT it appears, "to" is its final resting state. The browser
+     smoothly animates everything in between automatically. */
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    /* starts slightly faded out and shifted down by 6 pixels */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    /* ends fully visible at its normal position */
+  }
+}
+
+.site-favicon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.link-card:hover {
+  border-color: var(--accent);
+  /* a subtle hover state - the border picks up the accent color, signaling
+     "this card is interactive" without being loud about it */
+}
+
+.link-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.link-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 3px;
+}
+
+.link-card-title:hover {
+  color: var(--accent);
+}
+
+.link-card-url {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+  word-break: break-all;
+}
+
+.link-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.link-tag {
+  font-size: 11px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  font-weight: 600;
+}
+
+.card-actions {
+  /* groups the copy, edit, and delete buttons together in a tidy row,
+     instead of having them scattered/overlapping like before */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  /* a shared style for the small action buttons (copy, edit, delete) so
+     they all feel consistent instead of each being styled separately */
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.icon-btn.copy-btn:hover {
+  color: var(--accent);
+}
+
+.icon-btn.copy-btn.copied {
+  /* JS adds this class for one second right after a successful copy,
+     so the button visually confirms "it worked" before reverting */
+  color: var(--success);
+}
+
+.icon-btn.edit-btn:hover {
+  color: var(--accent);
+}
+
+.icon-btn.delete-btn:hover {
+  color: var(--danger);
+}
+
+.link-card-summary {
+  /* This box shows the AI-generated 2-line summary, once one exists.
+     Styled with a faint accent background so it visually reads as
+     "AI content" - distinct from the plain grey URL/date text. */
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-top: 8px;
+}
+
+.spinner {
+  /* A small spinning circle shown inside a button while we wait for
+     the AI's response. Built with pure CSS - no image or library. */
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  /* "linear infinite" means: rotate at a constant speed, forever,
+     until we remove this element (which we do once the AI responds). */
+}
+
+@keyframes spin {
+  /* This defines what "spinning" actually means: rotate from 0 degrees
+     all the way to 360 degrees (a full circle), then the "infinite"
+     above makes it repeat this loop endlessly. */
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.link-card-date {
+  font-size: 11px;
+  color: var(--ink-muted);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+/* ============ EDIT MODE ============
+   When you click "edit" on a card, instead of opening a separate popup,
+   we swap the card's display content for input boxes, in place. This
+   class gets added to a card while it's being edited. */
+
+.link-card.editing .link-card-view {
+  display: none;
+}
+
+.edit-form {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.link-card.editing .edit-form {
+  display: flex;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.edit-save-btn,
+.edit-cancel-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line);
+}
+
+.edit-save-btn {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+}
+
+.edit-save-btn:hover {
+  background: var(--accent-hover);
+}
+
+.edit-cancel-btn {
+  background: var(--surface);
+  color: var(--ink-muted);
+}
+
+.edit-cancel-btn:hover {
+  background: var(--bg);
+}
+
+/* ============ EMPTY STATE ============ */
+.empty-message {
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+  padding: 40px 20px;
+}
+
+.hidden {
+  display: none;
+}
+/* ===== Dashboard Layout ===== */
+
+.top-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.add-section {
+    flex: 2;
+}
+
+.dashboard-section {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.stat-card {
+    padding: 1px;
+    border-radius: 10px;
+
+    background: var(--surface);
+    border: 1px solid var(--line);
+
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+
+    transition: all 0.3s ease;
+    cursor: default;
+}
+.stat-card:hover {
+    transform: translateY(-6px);
+
+    box-shadow:
+      0 20px 40px rgba(0,0,0,0.12);
+
+    border-color: var(--accent);
+}
+
+.stat-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 5px;
+
+  background: linear-gradient(
+      90deg,
+      #6366f1,
+      #8b5cf6,
+      #ec4899
+  );
+}
+
+.stat-card h2 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -1px;
+    margin: 0;
+}
+
+.stat-card p {
+    margin-top: 6px;
+
+    font-size: 13px;
+    color: var(--ink-muted);
+
+    font-weight: 500;
+}
+
+
+
+.backup-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.backup-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: var(--accent-color);
+    color: white;
+    font-weight: 600;
+}
+
+.links-card::before{
+  background: linear-gradient(90deg,#3b82f6,#06b6d4);
+}
+
+.favorites-card::before{
+  background: linear-gradient(90deg,#f59e0b,#ef4444);
+}
+
+.tags-card::before{
+  background: linear-gradient(90deg,#10b981,#22c55e);
+}
+
+
+/* ===== Toast Notification ===== */
+
+.toast {
+
+  position: fixed;
+
+  top: 20px;
+  right: 20px;
+
+  background: var(--surface);
+  color: var(--ink);
+
+  border: 1px solid var(--line);
+
+  padding: 14px 18px;
+
+  border-radius: 12px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  opacity: 0;
+
+  transform: translateX(120%);
+
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+
+  z-index: 9999;
+}
+
+.toast.show {
+
+  opacity: 1;
+
+  transform: translateX(0);
+}
