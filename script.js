@@ -18,7 +18,7 @@
    normal, accepted tradeoff for a free-tier learning project - just
    never put a PAID/billing-enabled key here. */
 
-const GEMINI_API_KEY = 'AQ.Ab8RN6JhLzE3E8GCvIdjoQ3QOJNAurVez_vwlPSbqzXceLeGMw';
+const GEMINI_API_KEY = 'AQ.Ab8RN6Kg6KpzLcUtzKTmPCcp1gAssOy5KDfVkX8aR7bLvCeHpA';
 
 const GEMINI_API_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
