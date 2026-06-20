@@ -661,7 +661,7 @@ function renderLinks() {
       <div class="link-card-view">
         <div class="link-card-header">
         <a href="${link.url}" target="_blank" class="link-card-title">
-            <img src="${faviconUrl}" class="site-favicon" alt="" onerror="this.style.display='none'">
+            <img src="${faviconUrl}" class="site-favicon" alt="" onerror="this.style.display='none'" onload="this.style.opacity='1'">
             ${link.title}
         </a>
           <div class="card-actions">
