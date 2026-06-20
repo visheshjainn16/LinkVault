@@ -322,6 +322,15 @@ body {
   height: 18px;
   border-radius: 4px;
   flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  /* The favicon starts invisible (opacity: 0). The "transition" line
+     means: whenever opacity changes, animate it smoothly over 0.2
+     seconds instead of popping in instantly. We set opacity to 1 in
+     JavaScript the moment the image actually finishes loading - see
+     the onload addition in script.js. This avoids the brief
+     blank/broken look while Google's favicon service is still
+     fetching the icon. */
 }
 .link-card:hover {
   border-color: var(--accent);
