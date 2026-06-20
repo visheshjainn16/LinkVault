@@ -8,27 +8,12 @@
    ============================================ */
 
 
-/* ---------- AI SUMMARY CONFIG ----------
-   Paste your free Gemini API key between the quotes below. This key acts
-   like a password that lets our app talk to Google's AI service.
-
-   IMPORTANT: because this is a frontend-only project with no backend
-   server, this key lives directly in this file and would be visible to
-   anyone who views your page's source code or GitHub repo. That's a
-   normal, accepted tradeoff for a free-tier learning project - just
-   never put a PAID/billing-enabled key here. */
-
-const GEMINI_API_KEY = 'AQ.Ab8RN6Kg6KpzLcUtzKTmPCcp1gAssOy5KDfVkX8aR7bLvCeHpA';
-
-const GEMINI_API_URL =
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-/* Switched from gemini-2.0-flash to gemini-2.5-flash. The 2.0 version
-   has a noticeably lower free-tier rate limit than the newer 2.5
-   version, so this alone should make hitting 429 errors much less
-   common during normal use. */
-/* This is the exact web address our app will send a request to. The
-   ${GEMINI_API_KEY} at the end attaches your key as part of the URL,
-   which is how Google's server confirms the request is allowed. */
+/* NOTE: The Gemini API key used to live directly in this file as a
+   constant here. It's been removed entirely - the real key now lives
+   ONLY in the backend server's .env file, which never gets uploaded to
+   GitHub or sent to any browser. See the BACKEND_URL constant further
+   down (right above the summarizeLink function) for how this file now
+   talks to our own backend instead of Google directly. */
 
 
 /* ---------- STEP 1: Grab references to our HTML elements ----------
@@ -464,33 +449,21 @@ function saveEdit(id) {
 
 
 /* ---------- STEP 4e: AI Summary ----------
-   This is the first function in our whole project that talks to the
-   INTERNET while the app is running (everything else just used
-   localStorage, which is purely local to your browser).
+   This function used to call Google's AI directly from the browser,
+   with our secret key sitting right here in this file for anyone to
+   see. Now it calls OUR OWN backend server instead - the one we just
+   built with Node.js. Our server holds the real secret key privately;
+   this file doesn't need to know it at all anymore. */
 
-   Talking to the internet takes TIME - maybe half a second, maybe three
-   seconds, depending on your connection and how busy Google's server is.
-   JavaScript normally runs instantly, line by line, and WON'T wait
-   around for slow things by default. So we need a special way of
-   writing code that says "start this slow task, and whenever it
-   finishes (we don't know exactly when), continue from here."
-
-   That's what the keywords "async" and "await" do:
-   - "async function" marks this WHOLE function as one that's allowed
-     to pause and wait for slow operations inside it.
-   - "await" placed before something slow means "pause HERE until this
-     finishes, then continue to the next line with the result." */
+const BACKEND_URL = 'http://localhost:3000';
+/* While testing locally, our backend runs on your own computer at this
+   address. Once we deploy the backend to a real hosting service later,
+   we'll update this one line to point at that live server's address
+   instead - everything else in this function stays exactly the same. */
 
 async function summarizeLink(id, buttonElement) {
   const link = links.find(link => link.id === id);
   if (!link) return;
-
-  if (GEMINI_API_KEY === 'PASTE_YOUR_API_KEY_HERE') {
-    alert('Add your free Gemini API key in script.js first (look for GEMINI_API_KEY near the top of the file).');
-    return;
-    /* a friendly guard so the app doesn't just silently fail forever
-       if you forget to paste your key in */
-  }
 
   const originalButtonHtml = buttonElement.innerHTML;
   buttonElement.innerHTML = '<span class="spinner"></span>';
@@ -499,78 +472,38 @@ async function summarizeLink(id, buttonElement) {
      spinning loader and disable it, so the user gets visual feedback
      that something is happening and can't click it twice by accident. */
 
-  const promptText =
-    `Write a single, short, helpful 2-sentence summary of what someone ` +
-    `would likely find at this webpage, based on its title and URL. ` +
-    `Be concise and specific. Do not say "this webpage" or "this link" - ` +
-    `just describe the likely content directly.\n\n` +
-    `Title: ${link.title}\nURL: ${link.url}` +
-    (link.tags.length ? `\nTags: ${link.tags.join(', ')}` : '');
-  /* This is the actual instruction text we send to the AI. We give it
-     the title, URL, and tags as context clues, since (as discussed
-     earlier) the AI cannot actually visit and read the real page - it's
-     making an educated, useful guess based on these details instead. */
-
   try {
-    const response = await fetch(GEMINI_API_URL, {
-      /* fetch() is JavaScript's built-in tool for sending a request to
-         any web address. We "await" it because sending a request and
-         getting a response back takes real time over the network. */
+    const response = await fetch(`${BACKEND_URL}/api/summarize`, {
+      /* Notice this fetch() call now points at OUR backend's address
+         and OUR endpoint (/api/summarize) - not Google's API directly
+         anymore. Our backend is the only thing that talks to Google now. */
       method: 'POST',
-      /* POST means "I'm sending data TO the server", as opposed to GET
-         which just asks the server to send US something. We're sending
-         our prompt text, so POST is correct here. */
       headers: { 'Content-Type': 'application/json' },
-      /* this tells Google's server "the data I'm sending you is in
-         JSON format", so it knows how to read it correctly */
       body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }]
-        /* This exact shape - contents > parts > text - is simply the
-           specific structure Gemini's API expects to receive. Every
-           AI provider has its own slightly different expected shape;
-           this is the one Google's documentation specifies. */
+        title: link.title,
+        url: link.url,
+        tags: link.tags
+        /* We just send the plain link details - no API key involved
+           at all on this end. The prompt-building logic also now
+           lives on the backend, not here. */
       })
     });
 
-    if (response.status === 429) {
-      throw new Error('RATE_LIMIT');
-      /* 429 specifically means "you've sent too many requests too
-         quickly" - this is Google's free tier protecting itself, not
-         a bug in our code. We throw a specific labeled error here so
-         the catch block below can show an accurate message instead of
-         a generic one. */
-    }
-
-    if (!response.ok) {
-      /* response.ok is automatically true for successful responses
-         (status 200-299) and false for any error status (400s, 500s).
-         This check catches OTHER problems - like an invalid API key
-         (401/403) or Google's server having issues (500) - that
-         aren't specifically a rate limit. */
-      throw new Error('API_ERROR');
-    }
-
     const data = await response.json();
-    /* response.json() converts the raw response back into a JavaScript
-       object we can actually read. We "await" this too, since reading
-       and parsing the response also takes a small amount of time. */
 
-    const summaryText =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    /* This long chain with ?. ("optional chaining") safely digs into
-       the response object step by step. If ANY step along the way is
-       missing (e.g. the AI refused, or an error came back instead of
-       a real answer), this whole expression just becomes "undefined"
-       instead of crashing the entire app. */
-
-    if (!summaryText) {
-      throw new Error('No summary returned');
-      /* "throw" deliberately triggers an error on purpose. This jumps
-         straight down to the catch block below, where we show the user
-         a friendly message instead of a blank/broken result. */
+    if (response.status === 429 || data.error === 'RATE_LIMIT') {
+      throw new Error('RATE_LIMIT');
     }
 
-    link.summary = summaryText;
+    if (!response.ok || data.error) {
+      throw new Error(data.error || 'API_ERROR');
+    }
+
+    if (!data.summary) {
+      throw new Error('NO_SUMMARY');
+    }
+
+    link.summary = data.summary;
     saveToStorage();
     renderLinks();
     /* save the summary onto this link's data permanently, so it's still
@@ -581,25 +514,22 @@ async function summarizeLink(id, buttonElement) {
 
     if (error.message === 'RATE_LIMIT') {
       alert('Google\'s free tier has a limit on AI requests. This usually clears in under a minute, but if you\'ve tested this feature many times today, you may have hit today\'s daily limit instead - that resets at midnight Pacific Time. Either way, this isn\'t a bug in your code.');
-      /* this is the specific, accurate message for a 429 - telling the
-         user exactly what happened and exactly what to do about it,
-         instead of a vague "something went wrong" */
-    } else if (error.message === 'API_ERROR') {
-      alert('The AI service rejected this request. Double check that you pasted your full API key correctly in script.js, with no extra spaces.');
     } else {
-      alert('Could not generate a summary right now. Please check your internet connection and try again.');
-      /* the original generic message, now used only as a last-resort
-         fallback for truly unexpected problems */
+      alert('Could not generate a summary right now. Make sure your backend server is running (node index.js) and check your internet connection, then try again.');
+      /* this message now mentions the backend specifically, since
+         that's a new thing that can go wrong that didn't exist before -
+         if the backend server isn't running, every request will fail */
     }
 
     buttonElement.innerHTML = originalButtonHtml;
     buttonElement.disabled = false;
-    /* if ANYTHING went wrong anywhere in the "try" block above - bad
-       internet, invalid key, Google's server being down - we land HERE
-       instead of crashing, and put the button back to its normal state
-       so the user can try again. */
   }
 }
+
+/* ---------- STEP 5: Draw (render) the links on screen ----------
+   This is the most important function. Anytime the data changes
+   (add, delete, search, filter), we call this to rebuild what's
+   visually on the page so it matches our "links" array exactly. */
 
 let activeTagFilter = null;
 /* null means "no tag filter is selected, show everything" */
