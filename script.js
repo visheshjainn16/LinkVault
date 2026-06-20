@@ -455,7 +455,7 @@ function saveEdit(id) {
    built with Node.js. Our server holds the real secret key privately;
    this file doesn't need to know it at all anymore. */
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = 'https://linkvault-p7fh.onrender.com';
 /* While testing locally, our backend runs on your own computer at this
    address. Once we deploy the backend to a real hosting service later,
    we'll update this one line to point at that live server's address
